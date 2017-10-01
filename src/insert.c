@@ -1,13 +1,11 @@
-
-
 /********************************************************************
 	Vers. 17.2 - 11/09/2017
 ********************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "support.h"
-#include "cdata.h"
+#include "../include/support.h"
+#include "../include/cdata.h"
 
 /*--------------------------------------------------------------------
 Função: Insere um nodo na lista indicada, segundo o campo "prio" do TCB_t
