@@ -26,7 +26,44 @@ Entra:	pfila -> objeto FILA2
 Ret:	==0, se conseguiu
 	!=0, caso contrário (erro)
 --------------------------------------------------------------------*/
-int	InsertByPrio(PFILA2 pfila, TCB_t *tcb);
+// TODO Verificar se precisa expôr esta função, se não remover a declaração
+// int	InsertByPrio(PFILA2 pfila, TCB_t *tcb);
+
+/**
+ * \brief Retorna um ponteiro para o contexto da função de processo finalizado.
+ *
+ * Usada para dar acesso read-only à função ccreate, que cria novos processos.
+ * @return Ponteiro para o contexto da função de processo finalizado - deve ser inicializado antes.
+ */
+ucontext_t *GetFinishProcessContext();
+
+/**
+ * \brief Retorna um novo identificador para adição de uma thread.
+ *
+ * A variável new_id é incrementada e devolvida, garantindo que seja retornado
+ * um número diferente e maior do que zero, pois o identificador zero é exclusivo
+ * da função main.
+ *
+ * @return Novo identificador de thread - nunca se repete.
+ */
+int GetNewId();
+
+/**
+ * \brief Retorna um ponteiro para a thread em execução.
+ *
+ * @return Ponteiro para a thread em execução.
+ */
+TCB_t *GetExecutingThread();
+
+/**
+ * \brief Limpa o ponteiro para a thread em execução.
+ */
+void SetExecutingThreadToNull();
+
+/**
+ * \brief Módulo responsável por colocar a próxima thread da fila de aptos em execução.
+ */
+void Dispatcher();
 
 /**
  * \brief Inicializa o escalonador salvando o contexto da função main.
@@ -34,8 +71,16 @@ int	InsertByPrio(PFILA2 pfila, TCB_t *tcb);
  * A função verifica se o escalonador já foi inicializado, se sim a função retorna 1, se não
  * executa a inicialização e retorna 0.
  *
- * @return Retorna 0 se obteve sucesso, retorna 1 se já ocorreu a inicialização e outro valor em caso de erro.
+ * @return Retorna 0 se obteve sucesso, retorna 1 se já ocorreu a inicialização e um valor negativo em caso de erro.
  */
-int Init();
+int InitScheduler();
+
+/**
+ * \brief Adiciona uma nova thread à lista de aptos.
+ *
+ * @param new_thread Nova thread a ser adicionada à lista.
+ * @return Retorna 0 se obteve sucesso, retorna um valor negativo em caso de erro.
+ */
+int IncludeInReadyList(TCB_t *new_thread);
 
 #endif //LIBCTHREAD_A_SCHEDULER_H

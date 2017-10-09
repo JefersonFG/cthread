@@ -4,6 +4,9 @@
  * @author jfguimaraes
  */
 
+#include <stdlib.h>
+#include <ucontext.h>
+
 #include "../include/cthread.h"
 #include "../include/scheduler.h"
 
@@ -28,8 +31,30 @@ int cidentify (char *name, int size){
  * @return Retorna um valor positivo se executou com sucesso ou negativo caso contrário.
  */
 int ccreate (void* (*start)(void*), void *arg, int prio) {
-    // TODO Implementar ccreate
-    return 0;
+    // Inicializa o escalonador
+    InitScheduler();
+
+    // Obtém o id da thread
+    int new_id = GetNewId();
+
+    // Cria a representação da nova thread
+    TCB_t *new_thread = (TCB_t *) malloc(sizeof(TCB_t));
+    new_thread->tid = new_id;
+    new_thread->state = PROCST_APTO;
+    new_thread->prio = 0;
+
+    // Cria o contexto da nova thread
+    getcontext(&(new_thread->context));
+    new_thread->context.uc_link = GetFinishProcessContext();
+    new_thread->context.uc_stack.ss_sp = (char*) malloc(SIGSTKSZ);
+    new_thread->context.uc_stack.ss_size = SIGSTKSZ;
+    makecontext(&(new_thread->context), (void (*)(void)) start, 1, arg);
+
+    // Inclui a thread na lista de aptos
+    IncludeInReadyList(new_thread);
+
+    // Retorna o id da thread crada
+    return new_id;
 }
 
 /**
@@ -41,7 +66,27 @@ int ccreate (void* (*start)(void*), void *arg, int prio) {
  * @return Retorna 0 se executou corretamente, retorna um valor negativo caso contrário.
  */
 int cyield(void){
-    // TODO Implementar cyield
+    // Inicializa o escalonador
+    InitScheduler();
+
+    // Configura a thread em execução como apta
+    TCB_t *executing_thread = GetExecutingThread();
+    executing_thread->state = PROCST_APTO;
+
+    // Salva o tempo em que a thread permaneceu em execução
+    executing_thread->prio += stopTimer();
+
+    // Salva o contexto atual da thread
+    getcontext(&executing_thread->context);
+
+    // Coloca a thread na lista de aptos
+    IncludeInReadyList(executing_thread);
+
+    // Limpa o ponteiro de thread em execução
+    SetExecutingThreadToNull();
+
+    // Chama o escalonador para colocar a próxima thread em execução e retorna
+    Dispatcher();
     return 0;
 }
 
