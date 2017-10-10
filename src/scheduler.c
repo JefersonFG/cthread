@@ -11,8 +11,8 @@
  * @author jfguimaraes
  */
 
-#include <ucontext.h>
 #include <stdlib.h>
+#include <ucontext.h>
 
 #include "../include/scheduler.h"
 
@@ -20,17 +20,30 @@
 #define SCHEDULER_NOT_INITIALIZED 0
 #define SCHEDULER_INITIALIZED 1
 
+/// Contexto da função de finalização de processos
+ucontext_t finish_thread_context;
+
 /// Variável usada para geração de novo indicador de thread
 static int new_id = 0;
 
 /// Fila de processos no estado apto.
-static FILA2 fila_aptos;
+static FILA2 ready_list;
 
 /// Fila de processos no estado bloqueado.
-static FILA2 fila_bloqueados;
+static FILA2 blocked_list;
 
 /// Processo em execução.
-static TCB_t *thread_em_execucao;
+static TCB_t *executing_thread = NULL;
+
+/**
+ * \brief Retorna um ponteiro para o contexto da função de processo finalizado.
+ *
+ * Usada para dar acesso read-only à função ccreate, que cria novos processos.
+ * @return Ponteiro para o contexto da função de processo finalizado - deve ser inicializado antes.
+ */
+ucontext_t *GetFinishProcessContext() {
+    return &finish_thread_context;
+}
 
 /**
  * \brief Retorna um novo identificador para adição de uma thread.
@@ -38,10 +51,38 @@ static TCB_t *thread_em_execucao;
  * A variável new_id é incrementada e devolvida, garantindo que seja retornado
  * um número diferente e maior do que zero, pois o identificador zero é exclusivo
  * da função main.
+ *
  * @return Novo identificador de thread - nunca se repete.
  */
 int GetNewId() {
     return ++new_id;
+}
+
+/**
+ * \brief Retorna um ponteiro para a thread em execução.
+ *
+ * @return Ponteiro para a thread em execução.
+ */
+TCB_t *GetExecutingThread() {
+    return executing_thread;
+}
+
+/**
+ * \brief Limpa o ponteiro para a thread em execução.
+ */
+void SetExecutingThreadToNull() {
+    executing_thread = NULL;
+}
+
+/**
+ * \brief Indica se a lista de aptos está vazia.
+ * @return Se a lista estiver vazia retorna 1, do contrário retorna 0.
+ */
+int IsReadyListEmpty() {
+    if (FirstFila2(&ready_list) != 0)
+        return 1;
+    else
+        return 0;
 }
 
 /**
@@ -55,19 +96,71 @@ int GetNewId() {
  * @param tcb Nodo representando a thread a ser inserida na fila.
  * @return Retorna 0 se obteve sucesso, outro valor em caso de falha.
  */
-int	InsertByPrio(PFILA2 pfila, TCB_t *tcb) {
+static int InsertByPrio(PFILA2 pfila, TCB_t *tcb) {
 	TCB_t *tcb_it;
 	
 	// pfile vazia?
-	if (FirstFila2(pfila)==0) {
+	if (FirstFila2(pfila) == 0) {
 		do {
 			tcb_it = (TCB_t *) GetAtIteratorFila2(pfila);
-			if (tcb->prio < tcb_it->prio) {
+			if (tcb->prio < tcb_it->prio)
 				return InsertBeforeIteratorFila2(pfila, tcb);
-			}
-		} while (NextFila2(pfila)==0);
-	}	
-	return AppendFila2(pfila, (void *)tcb);
+		} while (NextFila2(pfila) == 0);
+	}
+
+	return AppendFila2(pfila, (void *) tcb);
+}
+
+/**
+ * \brief Módulo responsável por colocar a próxima thread da fila de aptos em execução.
+ */
+void Dispatcher() {
+    // TODO Sempre que o dispatcher for chamado a thread em execução estará nula?
+
+    // Verifica se o ponteiro para a thread em execução está vazio
+    if (executing_thread == NULL) {
+        // Verifica se a fila de aptos está vazia
+        FirstFila2(&ready_list);
+
+        TCB_t *next_ready = (TCB_t *) GetAtIteratorFila2(&ready_list);
+
+        if (next_ready != NULL) {
+            // Fila não vazia, coloca o primeiro elemento em execução
+            executing_thread = next_ready;
+            executing_thread->state = PROCST_EXEC;
+            executing_thread->is_suspended = PROCESS_NOT_SUSPENDED;
+
+            // Remove o elemento da lista de aptos
+            DeleteAtIteratorFila2(&ready_list);
+
+            // Inicia a contagem de tempo em execução da thread
+            startTimer();
+
+            // Inicia sua execução
+            setcontext(&(executing_thread->context));
+        }
+    }
+}
+
+/**
+ * \brief Remove a thread da memória e chama a função de seleção da próxima thread a executar.
+ *
+ * O contexto dessa função é passado como parâmetro para o uc_link do contexto de todas as threads,
+ * garantindo que essa função seja executada ao final da execução de todas as threads. Seu contexto
+ * é inicializado pela função InitScheduler().
+ */
+static void FinishThread() {
+    // Libera a memória do processo em execução
+    free(executing_thread);
+
+    // Reseta o ponteiro
+    executing_thread = NULL;
+
+    // Reseta o timer de execução
+    stopTimer();
+
+    // Chama a função de seleção da próxima thread a executar
+    Dispatcher();
 }
 
 /**
@@ -76,23 +169,34 @@ int	InsertByPrio(PFILA2 pfila, TCB_t *tcb) {
  * A função verifica se o escalonador já foi inicializado, se sim a função retorna 1, se não
  * executa a inicialização e retorna 0.
  *
- * @return Retorna 0 se obteve sucesso, retorna 1 se já ocorreu a inicialização e outro valor em caso de erro.
+ * @return Retorna 0 se obteve sucesso, retorna 1 se já ocorreu a inicialização e um valor negativo em caso de erro.
  */
-int Init() {
+int InitScheduler() {
     // Variável indicando se o escalonador já foi inicializado
     // Por ser estática a variável preserva seu valor em todas as chamadas dessa função
     static int isInitialized = SCHEDULER_NOT_INITIALIZED;
 
     if (isInitialized == SCHEDULER_NOT_INITIALIZED) {
+        // Inicializa o contexto da função de finalização de threads
+        getcontext(&finish_thread_context);
+        finish_thread_context.uc_link = NULL;
+        finish_thread_context.uc_stack.ss_sp = (char*) malloc(SIGSTKSZ);
+        finish_thread_context.uc_stack.ss_size = SIGSTKSZ;
+        makecontext(&finish_thread_context, (void (*)(void)) FinishThread, 0);
+
+
         // Inicializa a representação da função main
-        TCB_t *main_function = malloc(sizeof(TCB_t));
+        TCB_t *main_function = (TCB_t *) malloc(sizeof(TCB_t));
         main_function->tid = 0;
         main_function->state = PROCST_EXEC;
         main_function->prio = 0;
-        getcontext(&main_function->context);
+        main_function->is_suspended = PROCESS_NOT_SUSPENDED;
+
+        getcontext(&(main_function->context));
+        main_function->context.uc_link = &finish_thread_context;
 
         // Salva a thread principal como a thread em execução
-        thread_em_execucao = main_function;
+        executing_thread = main_function;
 
         // Inicializa o contador de tempo para controle de prioridade
         startTimer();
@@ -102,6 +206,16 @@ int Init() {
         return 0;
     }
 
-    // Retorna 1 caso não tenha inicializado
+    // Retorna 1 caso o escalonador já estivesse inicializado antes
     return 1;
+}
+
+/**
+ * \brief Adiciona uma nova thread à lista de aptos.
+ *
+ * @param new_thread Nova thread a ser adicionada à lista.
+ * @return Retorna 0 se obteve sucesso, retorna um valor negativo em caso de erro.
+ */
+int IncludeInReadyList(TCB_t *new_thread) {
+    return InsertByPrio(&ready_list, new_thread);
 }

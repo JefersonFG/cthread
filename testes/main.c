@@ -1,13 +1,26 @@
 #include <stdio.h>
 #include "../include/cthread.h"
 
+void* TestFunc(void *arg) {
+    printf("Print da TestFunc!\n");
+    return;
+}
+
 int main() {
     // Programa de teste da biblioteca
-    int x = -1;
+    int t1 = -1;
 
-    x = ccreate(NULL, NULL, 0);
+    t1 = ccreate(TestFunc, (void *) NULL, 0);
 
-    printf("O valor de retorno da função ccreate é: %d\n", x);
+    printf("O valor de retorno da função ccreate é: %d\n", t1);
+
+    cyield();
+
+    printf("Print da main depois do primeiro cyield!\n");
+
+    cyield();
+
+    printf("Print da main depois do segundo cyield!\n");
 
     return 0;
 }

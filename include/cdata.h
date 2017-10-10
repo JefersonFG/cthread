@@ -16,6 +16,9 @@
 #define	PROCST_BLOQ	3
 #define	PROCST_TERMINO	4
 
+#define PROCESS_NOT_SUSPENDED 0
+#define PROCESS_SUSPENDED 1
+
 /* Os campos "tid", "state", "prio" e "context" dessa estrutura devem ser mantidos e usados convenientemente
    Pode-se acrescentar outros campos APÓS os campos obrigatórios dessa estrutura
 */
@@ -27,7 +30,8 @@ typedef struct s_TCB {
 	ucontext_t 	context;	// contexto de execução da thread (SP, PC, GPRs e recursos) 
 	
 	/* Se necessário, pode-se acrescentar campos nessa estrutura A PARTIR DAQUI! */
-	
+	int is_suspended;    // indica se a thread está suspensa
+                        // usado para quando a thread tem seu contexto restaurado
 	
 } TCB_t; 
 
