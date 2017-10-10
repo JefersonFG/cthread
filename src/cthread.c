@@ -42,6 +42,7 @@ int ccreate (void* (*start)(void*), void *arg, int prio) {
     new_thread->tid = new_id;
     new_thread->state = PROCST_APTO;
     new_thread->prio = 0;
+    new_thread->is_suspended = PROCESS_NOT_SUSPENDED;
 
     // Cria o contexto da nova thread
     getcontext(&(new_thread->context));
@@ -69,24 +70,37 @@ int cyield(void){
     // Inicializa o escalonador
     InitScheduler();
 
-    // Configura a thread em execução como apta
-    TCB_t *executing_thread = GetExecutingThread();
-    executing_thread->state = PROCST_APTO;
+    // Verifica se a lista de aptos está vazia, se estiver nada a fazer
+    if (IsReadyListEmpty() == 0) {
+        // Obtém o ponteiro para thread em execução
+        TCB_t *executing_thread = GetExecutingThread();
 
-    // Salva o tempo em que a thread permaneceu em execução
-    executing_thread->prio += stopTimer();
+        // Salva o tempo em que a thread permaneceu em execução
+        executing_thread->prio += stopTimer();
 
-    // Salva o contexto atual da thread
-    getcontext(&executing_thread->context);
+        // Indica que a thread será suspensa
+        executing_thread->is_suspended = PROCESS_SUSPENDED;
 
-    // Coloca a thread na lista de aptos
-    IncludeInReadyList(executing_thread);
+        // Salva o contexto atual da thread
+        getcontext(&(executing_thread->context));
 
-    // Limpa o ponteiro de thread em execução
-    SetExecutingThreadToNull();
+        // Verifica se a thread está suspensa
+        // Quando a thread tiver seu contexto restaurado is_suspended será falso
+        if (executing_thread->is_suspended == PROCESS_SUSPENDED) {
+            // Configura a thread em execução como apta
+            executing_thread->state = PROCST_APTO;
 
-    // Chama o escalonador para colocar a próxima thread em execução e retorna
-    Dispatcher();
+            // Coloca a thread na lista de aptos
+            IncludeInReadyList(executing_thread);
+
+            // Limpa o ponteiro de thread em execução
+            SetExecutingThreadToNull();
+
+            // Chama o escalonador para colocar a próxima thread em execução
+            Dispatcher();
+        }
+    }
+
     return 0;
 }
 

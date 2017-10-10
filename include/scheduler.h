@@ -61,6 +61,12 @@ TCB_t *GetExecutingThread();
 void SetExecutingThreadToNull();
 
 /**
+ * \brief Indica se a lista de aptos está vazia.
+ * @return Se a lista estiver vazia retorna 1, do contrário retorna 0.
+ */
+int IsReadyListEmpty();
+
+/**
  * \brief Módulo responsável por colocar a próxima thread da fila de aptos em execução.
  */
 void Dispatcher();

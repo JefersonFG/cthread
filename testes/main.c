@@ -16,7 +16,11 @@ int main() {
 
     cyield();
 
-    printf("Print da main depois do cyield!\n");
+    printf("Print da main depois do primeiro cyield!\n");
+
+    cyield();
+
+    printf("Print da main depois do segundo cyield!\n");
 
     return 0;
 }

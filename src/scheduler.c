@@ -75,6 +75,17 @@ void SetExecutingThreadToNull() {
 }
 
 /**
+ * \brief Indica se a lista de aptos está vazia.
+ * @return Se a lista estiver vazia retorna 1, do contrário retorna 0.
+ */
+int IsReadyListEmpty() {
+    if (FirstFila2(&ready_list) != 0)
+        return 1;
+    else
+        return 0;
+}
+
+/**
  * \brief Insere um nodo na lista indicada segundo o campo "prio" do TCB_t.
  *
  * A fila deve estar ordenada, o que pode ser garantido utilizando somente essa função
@@ -117,6 +128,7 @@ void Dispatcher() {
             // Fila não vazia, coloca o primeiro elemento em execução
             executing_thread = next_ready;
             executing_thread->state = PROCST_EXEC;
+            executing_thread->is_suspended = PROCESS_NOT_SUSPENDED;
 
             // Remove o elemento da lista de aptos
             DeleteAtIteratorFila2(&ready_list);
@@ -178,6 +190,7 @@ int InitScheduler() {
         main_function->tid = 0;
         main_function->state = PROCST_EXEC;
         main_function->prio = 0;
+        main_function->is_suspended = PROCESS_NOT_SUSPENDED;
 
         getcontext(&(main_function->context));
         main_function->context.uc_link = &finish_thread_context;
