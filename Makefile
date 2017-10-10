@@ -3,21 +3,28 @@ CFLAGS = -m32 -Wall
 AR = ar
 ARFLAGS = crs
 
-TARGET = lib/libcthread.a
-OBJ = bin/cthread.o
+LIB = lib/libcthread.a
+CTHREAD = bin/cthread.o
 SUPPORT = bin/support.o
+SCHEDULER = bin/scheduler.o
 
-HEADERS = $(wildcard include/*.h)
-SRC = $(wildcard src/*.c)
+CTHREAD_SRC = src/cthread.c
+SCHEDULER_SRC = src/scheduler.c
 
-all: $(OBJ) $(TARGET)
+HEADERS := $(wildcard include/*.h)
 
-$(OBJ): $(SRC) $(HEADERS)
+all: $(LIB)
+
+$(SCHEDULER): $(SCHEDULER_SRC) $(HEADERS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(TARGET): $(OBJ)
-	$(AR) $(ARFLAGS) $@ $(OBJ) $(SUPPORT)
+$(CTHREAD): $(CTHREAD_SRC) $(HEADERS)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(LIB): $(CTHREAD) $(SCHEDULER)
+	$(AR) $(ARFLAGS) $@ $(CTHREAD) $(SCHEDULER) $(SUPPORT)
 
 clean:
-	-rm -f $(OBJ)
-	-rm -f $(TARGET)
+	-rm -f $(CTHREAD)
+	-rm -f $(SCHEDULER)
+	-rm -f $(LIB)
