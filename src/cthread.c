@@ -1,11 +1,19 @@
 /**
  * \brief Implementação das funções da interface da biblioteca cthread.
  *
- * @author jfguimaraes
+ * @author Luis Miguel, Jeferson Ferreira, Vinicius Chagas
  */
 
+#include <string.h>
+#include <stdio.h>
 #include "../include/cthread.h"
 #include "../include/scheduler.h"
+#define INITIALIZED 1
+#define UNINITIALIZED 0
+
+static int init_status = UNINITIALIZED;
+
+void initialize();
 
 /**
  * \brief Retorna a identificação do grupo que desenvolveu a biblioteca.
@@ -15,8 +23,22 @@
  * @return Retorna 0 se executou corretamente, retorna um número negativo caso contrário.
  */
 int cidentify (char *name, int size){
-    // TODO Implementar cidentify
-    return 0;
+    char group_id[100];
+
+    if(init_status == UNINITIALIZED)
+        initialize();
+
+    sprintf(group_id,"Luis Miguel Santos Batista\t\t-\t00265037\nJeferson Ferreira Guimaraes\t\t-\t00262522\nVinicius Chagas Soares\t\t-\t00262510\n");
+
+    if(strlen(group_id) <= size){
+        strcpy(name,group_id);
+        return 0;
+    } else
+        return -1;
+}
+
+void initialize() {
+    init_status = INITIALIZED;  //TODO Implementar initialize
 }
 
 /**
