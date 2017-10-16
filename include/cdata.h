@@ -32,6 +32,7 @@ typedef struct s_TCB {
 	/* Se necessário, pode-se acrescentar campos nessa estrutura A PARTIR DAQUI! */
 	int is_suspended;    // indica se a thread está suspensa
                         // usado para quando a thread tem seu contexto restaurado
+    int joined_thread_id; // id da thread que aguarda o término da atual
 	
 } TCB_t; 
 

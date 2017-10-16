@@ -110,6 +110,62 @@ static int InsertByPrio(PFILA2 pfila, TCB_t *tcb) {
 }
 
 /**
+ * \brief Adiciona uma nova thread à lista de aptos.
+ *
+ * @param new_thread Nova thread a ser adicionada à lista.
+ * @return Retorna 0 se obteve sucesso, retorna um valor negativo em caso de erro.
+ */
+int IncludeInReadyList(TCB_t *new_thread) {
+    return InsertByPrio(&ready_list, new_thread);
+}
+
+/**
+ * \brief Adiciona uma nova thread à lista de bloquados.
+ *
+ * @param new_thread Nova thread a ser adicionada à lista.
+ * @return Retorna 0 se obteve sucesso, retorna um valor negativo em caso de erro.
+ */
+int IncludeInBlockedList(TCB_t *new_thread) {
+    return InsertByPrio(&blocked_list, new_thread);
+}
+
+/**
+ * \brief Busca a thread de id thread_id na lista de aptos.
+ *
+ * @param thread_id Id da thread a ser buscada.
+ * @return Ponteiro para a thread encontrada ou NULL se não encontrada.
+ */
+TCB_t *GetThreadFromReadyList(int thread_id) {
+    TCB_t *searched_thread = NULL;
+
+    FirstFila2(&ready_list);
+
+    do {
+        searched_thread = (TCB_t *) GetAtIteratorFila2(&ready_list);
+    } while(searched_thread != NULL && searched_thread->tid != thread_id);
+
+    return searched_thread;
+}
+
+/**
+ * \brief Busca a thread de id thread_id na lista de bloqueados.
+ *
+ * @param thread_id Id da thread a ser buscada.
+ * @return Ponteiro para a thread encontrada ou NULL se não encontrada.
+ */
+TCB_t *GetThreadFromBlockedList(int thread_id) {
+    TCB_t *searched_thread = NULL;
+
+    FirstFila2(&blocked_list);
+
+    do {
+        searched_thread = (TCB_t *) GetAtIteratorFila2(&blocked_list);
+    } while(searched_thread != NULL && searched_thread->tid != thread_id);
+
+    return searched_thread;
+}
+
+/**
  * \brief Módulo responsável por colocar a próxima thread da fila de aptos em execução.
  */
 void Dispatcher() {
@@ -138,9 +194,16 @@ void Dispatcher() {
  *
  * O contexto dessa função é passado como parâmetro para o uc_link do contexto de todas as threads,
  * garantindo que essa função seja executada ao final da execução de todas as threads. Seu contexto
- * é inicializado pela função InitScheduler().
+ * é inicializado pela função InitScheduler(). Antes de finalizar a execução da função verifica se
+ * alguma thread esperava pelo fim da atual, se sim a coloca novamente na lista de aptos.
  */
 static void FinishThread() {
+    if (executing_thread->joined_thread_id >= 0) {
+        TCB_t *blocked_thread = GetThreadFromBlockedList(executing_thread->joined_thread_id);
+        blocked_thread->state = PROCST_APTO;
+        IncludeInReadyList(blocked_thread);
+    }
+
     free(executing_thread);
     executing_thread = NULL;
     stopTimer();
@@ -171,6 +234,7 @@ int InitScheduler() {
         main_function->state = PROCST_EXEC;
         main_function->prio = 0;
         main_function->is_suspended = PROCESS_NOT_SUSPENDED;
+        main_function->joined_thread_id = -1;
 
         getcontext(&(main_function->context));
         main_function->context.uc_link = &finish_thread_context;
@@ -188,13 +252,14 @@ int InitScheduler() {
 }
 
 /**
- * \brief Adiciona uma nova thread à lista de aptos.
+ * \brief Coloca a thread atual no estado de bloqueio.
  *
- * @param new_thread Nova thread a ser adicionada à lista.
  * @return Retorna 0 se obteve sucesso, retorna um valor negativo em caso de erro.
  */
-int IncludeInReadyList(TCB_t *new_thread) {
-    return InsertByPrio(&ready_list, new_thread);
+int BlockCurrentThread() {
+    executing_thread->state = PROCST_BLOQ;
+    IncludeInBlockedList(executing_thread);
+    executing_thread = NULL;
 }
 
 /**
@@ -208,11 +273,9 @@ void ResetScheduler() {
     DeleteAtIteratorFila2(&ready_list);
     DeleteAtIteratorFila2(&blocked_list);
 
-    while ((NextFila2(&ready_list) == 0) ||
-            (NextFila2(&ready_list) == 3))
+    while (NextFila2(&ready_list) == 0)
         DeleteAtIteratorFila2(&ready_list);
-    while ((NextFila2(&blocked_list) == 0) ||
-            (NextFila2(&blocked_list) == 3))
+    while (NextFila2(&blocked_list) == 0)
         DeleteAtIteratorFila2(&blocked_list);
 
     isInitialized = SCHEDULER_NOT_INITIALIZED;

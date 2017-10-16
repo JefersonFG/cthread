@@ -48,6 +48,7 @@ int ccreate (void* (*start)(void*), void *arg, int prio) {
     new_thread->state = PROCST_APTO;
     new_thread->prio = (uint) prio * 0; // Para remover o warning
     new_thread->is_suspended = PROCESS_NOT_SUSPENDED;
+    new_thread->joined_thread_id = -1;
 
     // Cria o contexto da nova thread
     getcontext(&(new_thread->context));
@@ -107,8 +108,29 @@ int cyield(void){
  */
 int cjoin(int tid) {
     InitScheduler();
-    // TODO Implementar cjoin
-    return 0;
+
+    TCB_t *thread_to_wait = GetThreadFromReadyList(tid);
+
+    if ((thread_to_wait != NULL) && (thread_to_wait->joined_thread_id < 0)) {
+        TCB_t *current_thread = GetExecutingThread();
+        thread_to_wait->joined_thread_id = current_thread->tid;
+        current_thread->is_suspended = PROCESS_SUSPENDED;
+        current_thread->prio += stopTimer();
+
+        // Salva o contexto atual da thread
+        getcontext(&(current_thread->context));
+
+        // Verifica se a thread está suspensa
+        // Quando a thread tiver seu contexto restaurado is_suspended será falso
+        if (current_thread->is_suspended == PROCESS_SUSPENDED) {
+            BlockCurrentThread();
+            Dispatcher();
+        }
+
+        return 0;
+    }
+
+    return -1;
 }
 
 /**

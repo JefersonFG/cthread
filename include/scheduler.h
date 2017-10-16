@@ -67,6 +67,22 @@ void SetExecutingThreadToNull();
 int IsReadyListEmpty();
 
 /**
+ * \brief Adiciona uma nova thread à lista de aptos.
+ *
+ * @param new_thread Nova thread a ser adicionada à lista.
+ * @return Retorna 0 se obteve sucesso, retorna um valor negativo em caso de erro.
+ */
+int IncludeInReadyList(TCB_t *new_thread);
+
+/**
+ * \brief Busca a thread de id thread_id na lista de aptos.
+ *
+ * @param thread_id Id da thread a ser buscada.
+ * @return Ponteiro para a thread encontrada ou NULL se não encontrada.
+ */
+TCB_t *GetThreadFromReadyList(int thread_id);
+
+/**
  * \brief Módulo responsável por colocar a próxima thread da fila de aptos em execução.
  */
 void Dispatcher();
@@ -82,12 +98,11 @@ void Dispatcher();
 int InitScheduler();
 
 /**
- * \brief Adiciona uma nova thread à lista de aptos.
+ * \brief Coloca a thread atual no estado de bloqueio.
  *
- * @param new_thread Nova thread a ser adicionada à lista.
  * @return Retorna 0 se obteve sucesso, retorna um valor negativo em caso de erro.
  */
-int IncludeInReadyList(TCB_t *new_thread);
+int BlockCurrentThread();
 
 /**
  * \brief Reseta o escalonador para execução dos testes unitários.
