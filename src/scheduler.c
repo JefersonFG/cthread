@@ -7,8 +7,6 @@
  * threads dentro de cada fila é definida pelo tempo que que a thread
  * passou no estado executando, onde valores menores representam maior
  * prioridade.
- *
- * @author jfguimaraes
  */
 
 #include <stdlib.h>
@@ -19,6 +17,9 @@
 /// Constantes que indicam o estado de inicialização do escalonador
 #define SCHEDULER_NOT_INITIALIZED 0
 #define SCHEDULER_INITIALIZED 1
+
+/// Indica se o escalonador já está inicializado
+static int isInitialized = SCHEDULER_NOT_INITIALIZED;
 
 /// Contexto da função de finalização de processos
 ucontext_t finish_thread_context;
@@ -79,10 +80,7 @@ void SetExecutingThreadToNull() {
  * @return Se a lista estiver vazia retorna 1, do contrário retorna 0.
  */
 int IsReadyListEmpty() {
-    if (FirstFila2(&ready_list) != 0)
-        return 1;
-    else
-        return 0;
+    FirstFila2(&ready_list) != 0 ? 1 : 0;
 }
 
 /**
@@ -116,27 +114,20 @@ static int InsertByPrio(PFILA2 pfila, TCB_t *tcb) {
  */
 void Dispatcher() {
     // TODO Sempre que o dispatcher for chamado a thread em execução estará nula?
-
-    // Verifica se o ponteiro para a thread em execução está vazio
     if (executing_thread == NULL) {
-        // Verifica se a fila de aptos está vazia
         FirstFila2(&ready_list);
-
         TCB_t *next_ready = (TCB_t *) GetAtIteratorFila2(&ready_list);
 
         if (next_ready != NULL) {
-            // Fila não vazia, coloca o primeiro elemento em execução
             executing_thread = next_ready;
             executing_thread->state = PROCST_EXEC;
             executing_thread->is_suspended = PROCESS_NOT_SUSPENDED;
 
-            // Remove o elemento da lista de aptos
             DeleteAtIteratorFila2(&ready_list);
 
             // Inicia a contagem de tempo em execução da thread
             startTimer();
 
-            // Inicia sua execução
             setcontext(&(executing_thread->context));
         }
     }
@@ -150,16 +141,9 @@ void Dispatcher() {
  * é inicializado pela função InitScheduler().
  */
 static void FinishThread() {
-    // Libera a memória do processo em execução
     free(executing_thread);
-
-    // Reseta o ponteiro
     executing_thread = NULL;
-
-    // Reseta o timer de execução
     stopTimer();
-
-    // Chama a função de seleção da próxima thread a executar
     Dispatcher();
 }
 
@@ -172,10 +156,6 @@ static void FinishThread() {
  * @return Retorna 0 se obteve sucesso, retorna 1 se já ocorreu a inicialização e um valor negativo em caso de erro.
  */
 int InitScheduler() {
-    // Variável indicando se o escalonador já foi inicializado
-    // Por ser estática a variável preserva seu valor em todas as chamadas dessa função
-    static int isInitialized = SCHEDULER_NOT_INITIALIZED;
-
     if (isInitialized == SCHEDULER_NOT_INITIALIZED) {
         // Inicializa o contexto da função de finalização de threads
         getcontext(&finish_thread_context);
@@ -195,18 +175,15 @@ int InitScheduler() {
         getcontext(&(main_function->context));
         main_function->context.uc_link = &finish_thread_context;
 
-        // Salva a thread principal como a thread em execução
         executing_thread = main_function;
 
         // Inicializa o contador de tempo para controle de prioridade
         startTimer();
 
-        // Indica que o escalonador foi inicializado e retorna
         isInitialized = SCHEDULER_INITIALIZED;
         return 0;
     }
 
-    // Retorna 1 caso o escalonador já estivesse inicializado antes
     return 1;
 }
 
@@ -218,4 +195,25 @@ int InitScheduler() {
  */
 int IncludeInReadyList(TCB_t *new_thread) {
     return InsertByPrio(&ready_list, new_thread);
+}
+
+/**
+ * \brief Reseta o escalonador para execução dos testes unitários.
+ * @warning Função desenvolvida para fins de teste, não a utilize fora disso.
+ */
+void ResetScheduler() {
+    FirstFila2(&ready_list);
+    FirstFila2(&blocked_list);
+
+    DeleteAtIteratorFila2(&ready_list);
+    DeleteAtIteratorFila2(&blocked_list);
+
+    while ((NextFila2(&ready_list) == 0) ||
+            (NextFila2(&ready_list) == 3))
+        DeleteAtIteratorFila2(&ready_list);
+    while ((NextFila2(&blocked_list) == 0) ||
+            (NextFila2(&blocked_list) == 3))
+        DeleteAtIteratorFila2(&blocked_list);
+
+    isInitialized = SCHEDULER_NOT_INITIALIZED;
 }

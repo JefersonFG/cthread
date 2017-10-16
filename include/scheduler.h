@@ -89,4 +89,10 @@ int InitScheduler();
  */
 int IncludeInReadyList(TCB_t *new_thread);
 
+/**
+ * \brief Reseta o escalonador para execução dos testes unitários.
+ * @warning Função desenvolvida para fins de teste, não a utilize fora disso.
+ */
+void ResetScheduler();
+
 #endif //LIBCTHREAD_A_SCHEDULER_H

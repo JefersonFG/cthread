@@ -1,22 +1,16 @@
 /**
  * \brief Implementação das funções da interface da biblioteca cthread.
- *
- * @author Luis Miguel, Jeferson Ferreira, Vinicius Chagas
  */
 
 #include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <ucontext.h>
 
 #include "../include/cthread.h"
 #include "../include/scheduler.h"
-#define INITIALIZED 1
-#define UNINITIALIZED 0
 
-static int init_status = UNINITIALIZED;
-
-void initialize();
+/// Tamanho aproximado da string de identificação do grupo.
+#define IDENTIFICATION_SIZE 110
 
 /**
  * \brief Retorna a identificação do grupo que desenvolveu a biblioteca.
@@ -26,22 +20,13 @@ void initialize();
  * @return Retorna 0 se executou corretamente, retorna um número negativo caso contrário.
  */
 int cidentify (char *name, int size){
-    char group_id[100];
-
-    if(init_status == UNINITIALIZED)
-        initialize();
-
-    sprintf(group_id,"Luis Miguel Santos Batista\t\t-\t00265037\nJeferson Ferreira Guimaraes\t\t-\t00262522\nVinicius Chagas Soares\t\t-\t00262510\n");
-
-    if(strlen(group_id) <= size){
-        strcpy(name,group_id);
-        return 0;
-    } else
+    if (size < IDENTIFICATION_SIZE)
         return -1;
-}
 
-void initialize() {
-    init_status = INITIALIZED;  //TODO Implementar initialize
+    strcpy(name, "Jeferson Ferreira Guimaraes - 262522\n"
+            "Luis Miguel Santos Batista - 265037\nVinicius Chagas Soares - 262510\n");
+
+    return 0;
 }
 
 /**
@@ -53,17 +38,15 @@ void initialize() {
  * @return Retorna um valor positivo se executou com sucesso ou negativo caso contrário.
  */
 int ccreate (void* (*start)(void*), void *arg, int prio) {
-    // Inicializa o escalonador
     InitScheduler();
 
-    // Obtém o id da thread
     int new_id = GetNewId();
 
     // Cria a representação da nova thread
     TCB_t *new_thread = (TCB_t *) malloc(sizeof(TCB_t));
     new_thread->tid = new_id;
     new_thread->state = PROCST_APTO;
-    new_thread->prio = 0;
+    new_thread->prio = (uint) prio * 0; // Para remover o warning
     new_thread->is_suspended = PROCESS_NOT_SUSPENDED;
 
     // Cria o contexto da nova thread
@@ -73,10 +56,7 @@ int ccreate (void* (*start)(void*), void *arg, int prio) {
     new_thread->context.uc_stack.ss_size = SIGSTKSZ;
     makecontext(&(new_thread->context), (void (*)(void)) start, 1, arg);
 
-    // Inclui a thread na lista de aptos
     IncludeInReadyList(new_thread);
-
-    // Retorna o id da thread crada
     return new_id;
 }
 
@@ -89,18 +69,12 @@ int ccreate (void* (*start)(void*), void *arg, int prio) {
  * @return Retorna 0 se executou corretamente, retorna um valor negativo caso contrário.
  */
 int cyield(void){
-    // Inicializa o escalonador
     InitScheduler();
 
-    // Verifica se a lista de aptos está vazia, se estiver nada a fazer
     if (IsReadyListEmpty() == 0) {
-        // Obtém o ponteiro para thread em execução
         TCB_t *executing_thread = GetExecutingThread();
 
-        // Salva o tempo em que a thread permaneceu em execução
         executing_thread->prio += stopTimer();
-
-        // Indica que a thread será suspensa
         executing_thread->is_suspended = PROCESS_SUSPENDED;
 
         // Salva o contexto atual da thread
@@ -109,16 +83,9 @@ int cyield(void){
         // Verifica se a thread está suspensa
         // Quando a thread tiver seu contexto restaurado is_suspended será falso
         if (executing_thread->is_suspended == PROCESS_SUSPENDED) {
-            // Configura a thread em execução como apta
             executing_thread->state = PROCST_APTO;
-
-            // Coloca a thread na lista de aptos
             IncludeInReadyList(executing_thread);
-
-            // Limpa o ponteiro de thread em execução
             SetExecutingThreadToNull();
-
-            // Chama o escalonador para colocar a próxima thread em execução
             Dispatcher();
         }
     }
@@ -139,6 +106,7 @@ int cyield(void){
  * @return Retorna 0 se executou corretamente, retorna um valor negativo caso contrário.
  */
 int cjoin(int tid) {
+    InitScheduler();
     // TODO Implementar cjoin
     return 0;
 }
@@ -155,6 +123,7 @@ int cjoin(int tid) {
  * @return Retorna 0 se executou corretamente, retorna um valor negativo caso contrário.
  */
 int csem_init(csem_t *sem, int count) {
+    InitScheduler();
     // TODO Implementar csem_init
     return 0;
 }
