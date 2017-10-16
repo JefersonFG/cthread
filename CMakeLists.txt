@@ -10,3 +10,4 @@ target_link_libraries(libcthread.a bin/support.o)
 set_target_properties(libcthread.a PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
 
 add_subdirectory(testes)
+add_subdirectory(test)

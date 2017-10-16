@@ -1,12 +1,8 @@
 #include <stdio.h>
 #include "../include/cthread.h"
 
-#include <unistd.h>
-
 void* TestFunc(void *arg) {
     printf("Print da TestFunc antes do primeiro cyield!\n");
-
-    //sleep(1);
 
     cyield();
 
