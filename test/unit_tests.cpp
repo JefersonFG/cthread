@@ -74,6 +74,15 @@ TEST_F(SchedulerTest, cjoin_changing_thread) {
     ASSERT_TRUE(global_var > 0);
 }
 
+TEST_F(SchedulerTest, csem_init) {
+    csem_t new_semaphor;
+
+    csem_init(&new_semaphor, 2);
+
+    ASSERT_EQ(2, new_semaphor.count);
+    ASSERT_EQ(-NXTFILA_VAZIA, NextFila2(new_semaphor.fila));
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
    return RUN_ALL_TESTS();

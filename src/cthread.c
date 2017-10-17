@@ -146,7 +146,13 @@ int cjoin(int tid) {
  */
 int csem_init(csem_t *sem, int count) {
     InitScheduler();
-    // TODO Implementar csem_init
+
+    sem->count = count;
+    sem->fila = (PFILA2) malloc(sizeof(PFILA2));
+
+    if(CreateFila2(sem->fila) != 0)
+        return -1;
+
     return 0;
 }
 
