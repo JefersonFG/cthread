@@ -89,6 +89,8 @@ int cyield(void){
             SetExecutingThreadToNull();
             Dispatcher();
         }
+    } else {
+        return -1;
     }
 
     return 0;

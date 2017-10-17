@@ -13,7 +13,7 @@ set(SOURCE_FILES
 
 add_library(libcthread.a ${SOURCE_FILES})
 target_link_libraries(libcthread.a bin/support.o)
-set_target_properties(libcthread.a PROPERTIES COMPILE_FLAGS "-m32" LINK_FLAGS "-m32")
+set_target_properties(libcthread.a PROPERTIES COMPILE_FLAGS "-m32 -Wall" LINK_FLAGS "-m32 -Wall")
 
 add_subdirectory(testes)
 add_subdirectory(test)

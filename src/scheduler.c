@@ -80,7 +80,7 @@ void SetExecutingThreadToNull() {
  * @return Se a lista estiver vazia retorna 1, do contrário retorna 0.
  */
 int IsReadyListEmpty() {
-    FirstFila2(&ready_list) != 0 ? 1 : 0;
+    return FirstFila2(&ready_list) != 0 ? 1 : 0;
 }
 
 /**
@@ -257,9 +257,12 @@ int InitScheduler() {
  * @return Retorna 0 se obteve sucesso, retorna um valor negativo em caso de erro.
  */
 int BlockCurrentThread() {
+    if (IncludeInBlockedList(executing_thread) != 0)
+        return -1;
+
     executing_thread->state = PROCST_BLOQ;
-    IncludeInBlockedList(executing_thread);
     executing_thread = NULL;
+    return 0;
 }
 
 /**
