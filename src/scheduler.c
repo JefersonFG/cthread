@@ -84,6 +84,14 @@ int IsReadyListEmpty() {
 }
 
 /**
+ * \brief Indica se a lista de bloqueados está vazia.
+ * @return Se a lista estiver vazia retorna 1, do contrário retorna 0.
+ */
+int IsBlockedListEmpty() {
+    return FirstFila2(&blocked_list) != 0 ? 1 : 0;
+}
+
+/**
  * \brief Insere um nodo na lista indicada segundo o campo "prio" do TCB_t.
  *
  * A fila deve estar ordenada, o que pode ser garantido utilizando somente essa função
@@ -139,10 +147,20 @@ TCB_t *GetThreadFromReadyList(int thread_id) {
     TCB_t *searched_thread = NULL;
 
     FirstFila2(&ready_list);
+    searched_thread = (TCB_t *) GetAtIteratorFila2(&ready_list);
 
-    do {
+    while (searched_thread != NULL && searched_thread->tid != thread_id) {
+        if (NextFila2(&ready_list) == -NXTFILA_ENDQUEUE) {
+            searched_thread = (TCB_t *) GetAtIteratorFila2(&ready_list);
+
+            if (searched_thread != NULL && searched_thread->tid != thread_id)
+                searched_thread = NULL;
+
+            break;
+        }
+
         searched_thread = (TCB_t *) GetAtIteratorFila2(&ready_list);
-    } while(searched_thread != NULL && searched_thread->tid != thread_id);
+    }
 
     return searched_thread;
 }
@@ -157,10 +175,20 @@ TCB_t *GetThreadFromBlockedList(int thread_id) {
     TCB_t *searched_thread = NULL;
 
     FirstFila2(&blocked_list);
+    searched_thread = (TCB_t *) GetAtIteratorFila2(&blocked_list);
 
-    do {
+    while (searched_thread != NULL && searched_thread->tid != thread_id) {
+        if (NextFila2(&blocked_list) == -NXTFILA_ENDQUEUE) {
+            searched_thread = (TCB_t *) GetAtIteratorFila2(&blocked_list);
+
+            if (searched_thread != NULL && searched_thread->tid != thread_id)
+                searched_thread = NULL;
+
+            break;
+        }
+
         searched_thread = (TCB_t *) GetAtIteratorFila2(&blocked_list);
-    } while(searched_thread != NULL && searched_thread->tid != thread_id);
+    }
 
     return searched_thread;
 }
@@ -273,13 +301,12 @@ void ResetScheduler() {
     FirstFila2(&ready_list);
     FirstFila2(&blocked_list);
 
-    DeleteAtIteratorFila2(&ready_list);
-    DeleteAtIteratorFila2(&blocked_list);
-
-    while (NextFila2(&ready_list) == 0)
+    while (!IsReadyListEmpty())
         DeleteAtIteratorFila2(&ready_list);
-    while (NextFila2(&blocked_list) == 0)
+    while (!IsBlockedListEmpty())
         DeleteAtIteratorFila2(&blocked_list);
 
     isInitialized = SCHEDULER_NOT_INITIALIZED;
+
+    InitScheduler();
 }
