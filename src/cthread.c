@@ -39,7 +39,6 @@ int cidentify (char *name, int size){
  */
 int ccreate (void* (*start)(void*), void *arg, int prio) {
     InitScheduler();
-
     int new_id = GetNewId();
 
     // Cria a representação da nova thread
@@ -169,7 +168,22 @@ int csem_init(csem_t *sem, int count) {
  * @return Retorna 0 se executou corretamente, retorna um valor negativo caso contrário.
  */
 int cwait(csem_t *sem) {
-    // TODO Implementar cwait
+    // TODO Testar cwait e ajeitar o que for preciso
+    InitScheduler();
+
+    sem->count--;
+
+    if(sem->count < 0){
+        TCB_t *thread = GetExecutingThread();
+
+        thread->state = PROCST_BLOQ;    //bloqueada também é suspensa?
+
+        AppendFila2(sem->fila,GetExecutingThread());
+        if(BlockCurrentThread() < 0)
+            return -1;
+        Dispatcher();
+    }
+
     return 0;
 }
 

@@ -126,6 +126,18 @@ TEST_F(SchedulerTest, csem_init) {
     ASSERT_EQ(-NXTFILA_VAZIA, NextFila2(new_semaphor.fila));
 }
 
+
+/**
+ * Verifica se o cwait decrementa o semáforo
+ */
+TEST_F(SchedulerTest, cwait) {
+    csem_t new_semaphore;
+    csem_init(&new_semaphore, 1);
+
+    cwait(&new_semaphore);
+    ASSERT_EQ(new_semaphore.count, -1);
+}
+
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
    return RUN_ALL_TESTS();
