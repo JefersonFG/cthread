@@ -248,15 +248,19 @@ void Dispatcher() {
  * garantindo que essa função seja executada ao final da execução de todas as threads. Seu contexto
  * é inicializado pela função InitScheduler(). Antes de finalizar a execução da função verifica se
  * alguma thread esperava pelo fim da atual, se sim a coloca novamente na lista de aptos.
+ *
+ * @warning Se executing_thread for NULL ocorreu um deadlock!
  */
 static void FinishThread() {
-    if (executing_thread->joined_thread_id >= 0)
-        UnblockThread(executing_thread->joined_thread_id);
+    if (executing_thread != NULL) {
+        if (executing_thread->joined_thread_id >= 0)
+            UnblockThread(executing_thread->joined_thread_id);
 
-    free(executing_thread);
-    executing_thread = NULL;
-    stopTimer();
-    Dispatcher();
+        free(executing_thread);
+        executing_thread = NULL;
+        stopTimer();
+        Dispatcher();
+    }
 }
 
 /**
