@@ -9,10 +9,15 @@ csem_t semaforo;
 
 void GroupIdentification();
 void RequestSemaphore();
+void FreeResource();
+
 
 void* TestFunc(void *arg) {
     printf("Thread 1 em execucao\n");
     RequestSemaphore();
+    cyield();
+    printf("Thread 1 termina sua execucao\n");
+    //FreeResource();
 
     return 0;
 
@@ -21,13 +26,20 @@ void* TestFunc(void *arg) {
 void* TestFunc2(void *arg) {
     printf("Thread 2 em execucao\n");
     RequestSemaphore();
+    cyield();
+    printf("Thread 2 termina sua execucao\n");
+    //RequestSemaphore();
+    //FreeResource();
 
     return 0;
 }
 
 void* TestFunc3(void *arg) {
     printf("Thread 3 em execucao\n");
+    FreeResource();
     RequestSemaphore();
+    printf("Thread 3 termina sua execucao\n");
+    //RequestSemaphore();
 
     return 0;
 }
@@ -48,6 +60,8 @@ int main() {
     //Inicializacao do semaforo
     csem_init(&semaforo, RESOURCE_QUANTITY);
 
+    printf("Recurso inicial do Semaforo: %d\n", semaforo.count);
+
     cjoin(Thread1);
     cjoin(Thread2);
     cjoin(Thread3);
@@ -64,11 +78,22 @@ void GroupIdentification() {
 }
 
 void RequestSemaphore() {
-    printf(" Chamada para cwait\n");
     if(cwait(&semaforo) == 0)
-        printf(" Recurso alocado com sucesso!\n");
-     if((cwait(&semaforo)) == -1)
-        printf(" Recurso indisponivel - Thread bloqueada!\n");
-    cyield();
+        printf(" cwait executada com sucesso!\n");
+     else
+        printf(" cwait executada com erro!\n");
 
+    printf(" Recurso atual: %d\n", semaforo.count);
 }
+
+void FreeResource() {
+    if(csignal(&semaforo) == 0)
+        printf(" csignal executada com sucesso, recurso liberado!\n");
+        else if(csignal(&semaforo) == -1)
+        printf(" csignal executada com erro! Nao foi possivel bloquear a thread\n");
+           else if(csignal(&semaforo) == -2)
+            printf(" csignal executada com erro na estrutura de fila!\n");
+
+    printf(" Recurso atual: %d\n", semaforo.count);
+}
+
