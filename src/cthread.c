@@ -174,10 +174,12 @@ int cwait(csem_t *sem) {
     sem->count--;
 
     if(sem->count < 0){
-        if(BlockCurrentThread() < 0)
+        AppendFila2(sem->fila,GetExecutingThread());
+        if(BlockCurrentThread() < 0){
+            LastFila2(sem->fila);
+            DeleteAtIteratorFila2(sem->fila);
             return -1;
-        else
-            AppendFila2(sem->fila,GetExecutingThread());
+        }
         Dispatcher();
     }
 
