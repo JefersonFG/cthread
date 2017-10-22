@@ -29,7 +29,7 @@ Ret:	==0, se conseguiu
 // TODO Verificar se precisa expôr esta função, se não remover a declaração
 // int	InsertByPrio(PFILA2 pfila, TCB_t *tcb);
 
-
+// TODO @vcsoares Retirar as listas daqui
 /// Fila de processos no estado apto.
 static FILA2 ready_list;
 

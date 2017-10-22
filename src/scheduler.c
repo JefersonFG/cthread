@@ -28,6 +28,8 @@ ucontext_t finish_thread_context;
 static int new_id = 0;
 
 //TODO: deixar essas listas lá no header se tudo funcionar legal
+//TODO @vcsoares Essas listas estão aqui para serem encapsuladas
+//TODO Coloca elas aqui de volta e cria funções públicas que operam nelas
 ///// Fila de processos no estado apto.
 //static FILA2 ready_list;
 //

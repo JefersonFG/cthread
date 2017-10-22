@@ -147,6 +147,8 @@ TEST_F(SchedulerTest, cwait) {
     csem_t new_semaphore;
     csem_init(&new_semaphore, 1);
 
+    // TODO @lmsbatista Olha o que eu escrevi no telegram e corrige esses testes
+
     cwait(&new_semaphore);
     ASSERT_EQ(new_semaphore.count, 0);
 

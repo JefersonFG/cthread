@@ -174,8 +174,10 @@ int cwait(csem_t *sem) {
     sem->count--;
 
     if(sem->count < 0){
+        // TODO @vcsoares Desnecessário
         TCB_t *thread = GetExecutingThread();
 
+        // TODO @vcsoares Densecessário, a função BlockCurrentThread já faz isso
         thread->state = PROCST_BLOQ;    //bloqueada também é suspensa?
 
         AppendFila2(sem->fila,GetExecutingThread());
@@ -204,18 +206,24 @@ int csignal(csem_t *sem) {
 
     sem->count++;
 
+    // TODO @vcsoares Count não precisa ser positivo, podem ter várias threads esperando
+    // TODO @vcsoares Não checa a fila diretamente, usa uma função de suporte e os valores de retorno
     if(sem->count >= 0 && sem->fila){
         if(FirstFila2(sem->fila) == 0){
             TCB_t *semaphorethread = (TCB_t*)GetAtIteratorFila2(sem->fila);
             TCB_t *blockedthread;
 
+            // TODO @vcsoares Não acessa a fila diretamente, encapsula numa função no escalonador
             FirstFila2(&blocked_list);
             do{
                 if(blocked_list.it == NULL)
                     break;
 
+                // TODO @vcsoares Já existe uma função pra busca de threads na fila de bloqueados
                 blockedthread = (TCB_t*)GetAtIteratorFila2(&blocked_list);
                 if(blockedthread == semaphorethread){
+                    // TODO @vcsoares Havia me esquecido de remover a thread da lista de bloqueados
+                    // TODO @vcsoares Vou criar uma função que faz isso
                     semaphorethread->state = PROCST_APTO;
                     DeleteAtIteratorFila2(sem->fila);
                     DeleteAtIteratorFila2(&blocked_list);
@@ -224,11 +232,13 @@ int csignal(csem_t *sem) {
                 }
             } while(NextFila2(&blocked_list) == 0);
         } else {
+            // TODO @vcsoares Desnecessário, se não tem thread na fila não precisa fazer nada!
             //fila do semáforo está vazia!
             free(sem->fila);
             sem->fila = malloc(sizeof(PFILA2));
         }
     } else {
+        // TODO @vcsoares Desnecessário, vide comentário acima
         //só deus sabe o que deu errado
         return -2;
     }
