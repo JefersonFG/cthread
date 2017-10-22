@@ -67,6 +67,12 @@ void SetExecutingThreadToNull();
 int IsReadyListEmpty();
 
 /**
+ * \brief Indica se a lista de bloqueados está vazia.
+ * @return Se a lista estiver vazia retorna 1, do contrário retorna 0.
+ */
+int IsBlockedListEmpty();
+
+/**
  * \brief Adiciona uma nova thread à lista de aptos.
  *
  * @param new_thread Nova thread a ser adicionada à lista.
@@ -83,7 +89,17 @@ int IncludeInReadyList(TCB_t *new_thread);
 TCB_t *GetThreadFromReadyList(int thread_id);
 
 /**
+ * \brief Remove a thread da lista de bloqueados e a insere na lista de aptos.
+ *
+ * @param thread_id Id da thread a ser desbloqueada.
+ * @return Retorna 0 se obteve sucesso, retorna um valor negativo em caso de erro.
+ */
+int UnblockThread(int thread_id);
+
+/**
  * \brief Módulo responsável por colocar a próxima thread da fila de aptos em execução.
+ *
+ * @attention É necessário que o ponteiro para a thread em execução esteja nulo.
  */
 void Dispatcher();
 

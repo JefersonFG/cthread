@@ -194,10 +194,34 @@ TCB_t *GetThreadFromBlockedList(int thread_id) {
 }
 
 /**
+ * \brief Remove a thread da lista de bloqueados e a insere na lista de aptos.
+ *
+ * @param thread_id Id da thread a ser desbloqueada.
+ * @return Retorna 0 se obteve sucesso, retorna um valor negativo em caso de erro.
+ */
+int UnblockThread(int thread_id) {
+    TCB_t *unblock_thread = GetThreadFromBlockedList(thread_id);
+
+    if (unblock_thread != NULL) {
+        unblock_thread->state = PROCST_APTO;
+
+        //Iterador da lista de bloqueados está na posição da thread que buscou
+        if (DeleteAtIteratorFila2(&blocked_list) != 0)
+            return -1;
+        if (IncludeInReadyList(unblock_thread) < 0)
+            return -1;
+    } else
+        return -1;
+
+    return 0;
+}
+
+/**
  * \brief Módulo responsável por colocar a próxima thread da fila de aptos em execução.
+ *
+ * @attention É necessário que o ponteiro para a thread em execução esteja nulo.
  */
 void Dispatcher() {
-    // TODO Sempre que o dispatcher for chamado a thread em execução estará nula?
     if (executing_thread == NULL) {
         FirstFila2(&ready_list);
         TCB_t *next_ready = (TCB_t *) GetAtIteratorFila2(&ready_list);
@@ -226,11 +250,8 @@ void Dispatcher() {
  * alguma thread esperava pelo fim da atual, se sim a coloca novamente na lista de aptos.
  */
 static void FinishThread() {
-    if (executing_thread->joined_thread_id >= 0) {
-        TCB_t *blocked_thread = GetThreadFromBlockedList(executing_thread->joined_thread_id);
-        blocked_thread->state = PROCST_APTO;
-        IncludeInReadyList(blocked_thread);
-    }
+    if (executing_thread->joined_thread_id >= 0)
+        UnblockThread(executing_thread->joined_thread_id);
 
     free(executing_thread);
     executing_thread = NULL;
