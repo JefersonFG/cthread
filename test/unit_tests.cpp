@@ -44,7 +44,7 @@ void* TestFunc(void *arg) {
 }
 
 /**
- * Função de testes
+ * Função de testes.
  */
 void* TestFunc2(void *arg) {
     global_var += 2;
@@ -59,6 +59,16 @@ void* TestFunc3(void *arg){
     global_var++;
     cwait(&semaphore);
     global_var++;
+}
+
+/**
+ * Função de testes.
+ */
+void* TestFunc3(void *arg) {
+    global_var += 3;
+    cyield();
+
+    EXPECT_FALSE(IsBlockedListEmpty());
 }
 
 /**
@@ -107,24 +117,28 @@ TEST_F(SchedulerTest, cjoin_changing_thread) {
     cjoin(id2);
 
     ASSERT_EQ(2, global_var);
+    EXPECT_TRUE(IsBlockedListEmpty());
 
     int id1 = ccreate(TestFunc, (void *) NULL, 0);
 
     cjoin(id1);
 
     ASSERT_EQ(3, global_var);
+    EXPECT_TRUE(IsBlockedListEmpty());
 
-    int id3 = ccreate(TestFunc, (void *) NULL, 0);
+    int id3 = ccreate(TestFunc3, (void *) NULL, 0);
     int id4 = ccreate(TestFunc2, (void *) NULL, 0);
 
     cjoin(id3);
 
-    ASSERT_EQ(6, global_var);
+    ASSERT_EQ(8, global_var);
+    EXPECT_TRUE(IsBlockedListEmpty());
 
     cjoin(id4);
     cjoin(-1);
 
-    ASSERT_EQ(6, global_var);
+    EXPECT_EQ(8, global_var);
+    EXPECT_TRUE(IsBlockedListEmpty());
 }
 
 /**
