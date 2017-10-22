@@ -16,10 +16,9 @@ extern "C"
 
 #include "gtest/gtest.h"
 
-/// Variável global para testes.
+/// Variáveis globais para testes.
 int global_var = 0;
-
-csem_t semaphore;
+csem_t global_semaphore;
 
 /**
  * Classe de testes com funções de inicialização e limpeza para os testes.
@@ -60,8 +59,11 @@ void* TestFunc3(void *arg) {
     EXPECT_FALSE(IsBlockedListEmpty());
 }
 
+/**
+ * Função de testes.
+ */
 void* TestFunc4(void *arg){
-    cwait(&semaphore);
+    cwait(&global_semaphore);
     cyield();
 }
 
@@ -166,19 +168,19 @@ TEST_F(SchedulerTest, cwait) {
 
 //TODO: descobrir como testar essa porra
 TEST_F(SchedulerTest, cwait_insertatqueue) {
-    csem_init(&semaphore,1);
+    csem_init(&global_semaphore,1);
 
     int id1 = ccreate(TestFunc4, (void*)NULL, 0);
     cjoin(id1);
-    EXPECT_TRUE(FirstFila2(semaphore.fila));
+    EXPECT_TRUE(FirstFila2(global_semaphore.fila));
 
     int id2 = ccreate(TestFunc4, (void*)NULL, 0);
     cjoin(id2);
-    EXPECT_FALSE(FirstFila2(semaphore.fila));
+    EXPECT_FALSE(FirstFila2(global_semaphore.fila));
 
     int id3 = ccreate(TestFunc4, (void*)NULL, 0);
     cjoin(id3);
-    EXPECT_FALSE(FirstFila2(semaphore.fila));
+    EXPECT_FALSE(FirstFila2(global_semaphore.fila));
 }
 
 /**

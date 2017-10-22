@@ -173,14 +173,28 @@ int cwait(csem_t *sem) {
 
     sem->count--;
 
-    if(sem->count < 0){
-        AppendFila2(sem->fila,GetExecutingThread());
-        if(BlockCurrentThread() < 0){
-            LastFila2(sem->fila);
-            DeleteAtIteratorFila2(sem->fila);
-            return -1;
+    if(sem->count < 0) {
+        TCB_t *current_thread = GetExecutingThread();
+
+        current_thread->prio += stopTimer();
+        current_thread->is_suspended = PROCESS_SUSPENDED;
+
+        // Salva o contexto atual da thread
+        getcontext(&(current_thread->context));
+
+        // Verifica se a thread está suspensa
+        // Quando a thread tiver seu contexto restaurado is_suspended será falso
+        if (current_thread->is_suspended == PROCESS_SUSPENDED) {
+            AppendFila2(sem->fila, current_thread);
+
+            if(BlockCurrentThread() < 0) {
+                LastFila2(sem->fila);
+                DeleteAtIteratorFila2(sem->fila);
+                return -1;
+            }
+
+            Dispatcher();
         }
-        Dispatcher();
     }
 
     return 0;
@@ -203,20 +217,13 @@ int csignal(csem_t *sem) {
 
     sem->count++;
 
-    if(sem->fila){
-        if(FirstFila2(sem->fila) == 0){
-            TCB_t *semaphorethread = (TCB_t*)GetAtIteratorFila2(sem->fila);
-            //TCB_t *blockedthread;
+    if(FirstFila2(sem->fila) == 0) {
+        TCB_t *semaphorethread = (TCB_t*)GetAtIteratorFila2(sem->fila);
 
-            if(UnblockThread(semaphorethread->tid) < 0)
-                return -1;
-            else
-                DeleteAtIteratorFila2(sem->fila);
-        } else {
-            //se existe a fila mas não consegue apontar pro primeiro
-            //é porque deu zica
-            return -2;
-        }
+        if(UnblockThread(semaphorethread->tid) < 0)
+            return -1;
+        else
+            DeleteAtIteratorFila2(sem->fila);
     }
 
     return 0;
