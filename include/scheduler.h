@@ -29,6 +29,14 @@ Ret:	==0, se conseguiu
 // TODO Verificar se precisa expôr esta função, se não remover a declaração
 // int	InsertByPrio(PFILA2 pfila, TCB_t *tcb);
 
+
+/// Fila de processos no estado apto.
+static FILA2 ready_list;
+
+/// Fila de processos no estado bloqueado.
+static FILA2 blocked_list;
+
+
 /**
  * \brief Retorna um ponteiro para o contexto da função de processo finalizado.
  *
@@ -81,6 +89,16 @@ int IncludeInReadyList(TCB_t *new_thread);
  * @return Ponteiro para a thread encontrada ou NULL se não encontrada.
  */
 TCB_t *GetThreadFromReadyList(int thread_id);
+
+/**
+ * \brief Busca a thread de id thread_id na lista de bloqueados.
+ *
+ * @param thread_id Id da thread a ser buscada.
+ * @return Ponteiro para a thread encontrada ou NULL se não encontrada.
+ */
+TCB_t *GetThreadFromBlockedList(int thread_id);
+
+//TCB_t *GetBlockedThreadAtIterator();
 
 /**
  * \brief Módulo responsável por colocar a próxima thread da fila de aptos em execução.

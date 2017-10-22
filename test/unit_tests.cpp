@@ -19,6 +19,8 @@ extern "C"
 /// Variável global para testes.
 int global_var = 0;
 
+csem_t semaphore;
+
 /**
  * Classe de testes com funções de inicialização e limpeza para os testes.
  */
@@ -46,6 +48,17 @@ void* TestFunc(void *arg) {
  */
 void* TestFunc2(void *arg) {
     global_var += 2;
+}
+
+void* TestFunc3(void *arg){
+    csem_init(&semaphore, 1);
+
+    cwait(&semaphore);
+    global_var++;
+    cwait(&semaphore);
+    global_var++;
+    cwait(&semaphore);
+    global_var++;
 }
 
 /**
@@ -135,7 +148,29 @@ TEST_F(SchedulerTest, cwait) {
     csem_init(&new_semaphore, 1);
 
     cwait(&new_semaphore);
+    ASSERT_EQ(new_semaphore.count, 0);
+
+    cwait(&new_semaphore);
     ASSERT_EQ(new_semaphore.count, -1);
+}
+
+//TODO: descobrir como testar essa porra
+//TEST_F(SchedulerTest, cwait_insertatqueue) {
+//    int id1 = ccreate(TestFunc3, (void*)NULL, 0);
+//
+//    ASSERT_FALSE(FirstFila2(semaphore.fila));
+//}
+
+/**
+ * Verifica se o csginal incrementa o semáforo
+ */
+TEST_F(SchedulerTest, csignal) {
+    csem_t new_semaphore;
+    csem_init(&new_semaphore, 1);
+
+    cwait(&new_semaphore);
+    csignal(&new_semaphore);
+    ASSERT_EQ(new_semaphore.count, 1);
 }
 
 int main(int argc, char **argv) {

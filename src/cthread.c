@@ -199,7 +199,40 @@ int cwait(csem_t *sem) {
  * @return Retorna 0 se executou corretamente, retorna um valor negativo caso contrário.
  */
 int csignal(csem_t *sem) {
-    // TODO Implementar csignal
+    // TODO testar csignal direito e ver se precisa corrigir algo
+    InitScheduler();
+
+    sem->count++;
+
+    if(sem->count >= 0 && sem->fila){
+        if(FirstFila2(sem->fila) == 0){
+            TCB_t *semaphorethread = (TCB_t*)GetAtIteratorFila2(sem->fila);
+            TCB_t *blockedthread;
+
+            FirstFila2(&blocked_list);
+            do{
+                if(blocked_list.it == NULL)
+                    break;
+
+                blockedthread = (TCB_t*)GetAtIteratorFila2(&blocked_list);
+                if(blockedthread == semaphorethread){
+                    semaphorethread->state = PROCST_APTO;
+                    DeleteAtIteratorFila2(sem->fila);
+                    DeleteAtIteratorFila2(&blocked_list);
+                    if(IncludeInReadyList(semaphorethread) < 0)
+                        return -1;
+                }
+            } while(NextFila2(&blocked_list) == 0);
+        } else {
+            //fila do semáforo está vazia!
+            free(sem->fila);
+            sem->fila = malloc(sizeof(PFILA2));
+        }
+    } else {
+        //só deus sabe o que deu errado
+        return -2;
+    }
+
     return 0;
 }
 

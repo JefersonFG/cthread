@@ -27,11 +27,12 @@ ucontext_t finish_thread_context;
 /// Variável usada para geração de novo indicador de thread
 static int new_id = 0;
 
-/// Fila de processos no estado apto.
-static FILA2 ready_list;
-
-/// Fila de processos no estado bloqueado.
-static FILA2 blocked_list;
+//TODO: deixar essas listas lá no header se tudo funcionar legal
+///// Fila de processos no estado apto.
+//static FILA2 ready_list;
+//
+///// Fila de processos no estado bloqueado.
+//static FILA2 blocked_list;
 
 /// Processo em execução.
 static TCB_t *executing_thread = NULL;
@@ -105,7 +106,7 @@ int IsBlockedListEmpty() {
 static int InsertByPrio(PFILA2 pfila, TCB_t *tcb) {
 	TCB_t *tcb_it;
 	
-	// pfile vazia?
+	// pfila vazia?
 	if (FirstFila2(pfila) == 0) {
 		do {
 			tcb_it = (TCB_t *) GetAtIteratorFila2(pfila);
@@ -192,6 +193,22 @@ TCB_t *GetThreadFromBlockedList(int thread_id) {
 
     return searched_thread;
 }
+
+/**
+ * \brief Retorna a thread na posição atual do iterador da lista de
+ *        threads bloqueadas.
+ *
+ * @return Ponteiro para a thread para a qual está apontando o iterador
+ *         da lista de threads bloqueadas.
+ */
+//TCB_t *GetBlockedThreadAtIterator(){
+//    return (TCB_t*)GetAtIteratorFila2(&blocked_list);
+//}
+//
+//int BlockedList_PutIterAtFirstPos(){
+//
+//}
+
 
 /**
  * \brief Módulo responsável por colocar a próxima thread da fila de aptos em execução.
