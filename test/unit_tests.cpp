@@ -50,17 +50,6 @@ void* TestFunc2(void *arg) {
     global_var += 2;
 }
 
-void* TestFunc3(void *arg){
-    csem_init(&semaphore, 1);
-
-    cwait(&semaphore);
-    global_var++;
-    cwait(&semaphore);
-    global_var++;
-    cwait(&semaphore);
-    global_var++;
-}
-
 /**
  * Função de testes.
  */
@@ -69,6 +58,11 @@ void* TestFunc3(void *arg) {
     cyield();
 
     EXPECT_FALSE(IsBlockedListEmpty());
+}
+
+void* TestFunc4(void *arg){
+    cwait(&semaphore);
+    cyield();
 }
 
 /**
@@ -171,11 +165,21 @@ TEST_F(SchedulerTest, cwait) {
 }
 
 //TODO: descobrir como testar essa porra
-//TEST_F(SchedulerTest, cwait_insertatqueue) {
-//    int id1 = ccreate(TestFunc3, (void*)NULL, 0);
-//
-//    ASSERT_FALSE(FirstFila2(semaphore.fila));
-//}
+TEST_F(SchedulerTest, cwait_insertatqueue) {
+    csem_init(&semaphore,1);
+
+    int id1 = ccreate(TestFunc4, (void*)NULL, 0);
+    cjoin(id1);
+    EXPECT_TRUE(FirstFila2(semaphore.fila));
+
+    int id2 = ccreate(TestFunc4, (void*)NULL, 0);
+    cjoin(id2);
+    EXPECT_FALSE(FirstFila2(semaphore.fila));
+
+    int id3 = ccreate(TestFunc4, (void*)NULL, 0);
+    cjoin(id3);
+    EXPECT_FALSE(FirstFila2(semaphore.fila));
+}
 
 /**
  * Verifica se o csginal incrementa o semáforo
