@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include "../include/cdata.h"
+#include "../include/scheduler.h"
 #include "../include/cthread.h"
 
 
@@ -13,7 +15,7 @@ void RequestSemaphore();
 void* TestFunc(void *arg) {
     printf("Thread 1 em execucao\n");
     RequestSemaphore();
-
+    cyield();
     return 0;
 
 }
@@ -21,14 +23,14 @@ void* TestFunc(void *arg) {
 void* TestFunc2(void *arg) {
     printf("Thread 2 em execucao\n");
     RequestSemaphore();
-
+    cyield();
     return 0;
 }
 
 void* TestFunc3(void *arg) {
     printf("Thread 3 em execucao\n");
     RequestSemaphore();
-
+    cyield();
     return 0;
 }
 
@@ -40,13 +42,13 @@ int main() {
     //Imprime a identificacao do grupo
     GroupIdentification();
 
+    //Inicializacao do semaforo
+    csem_init(&semaforo, RESOURCE_QUANTITY);
+
     //Criacao das threads
     Thread1 = ccreate(TestFunc, (void *) NULL, 0);
     Thread2 = ccreate(TestFunc2, (void *) NULL, 0);
     Thread3 = ccreate(TestFunc3, (void *) NULL, 0);
-
-    //Inicializacao do semaforo
-    csem_init(&semaforo, RESOURCE_QUANTITY);
 
     cjoin(Thread1);
     cjoin(Thread2);
@@ -65,10 +67,16 @@ void GroupIdentification() {
 
 void RequestSemaphore() {
     printf(" Chamada para cwait\n");
-    if(cwait(&semaforo) == 0)
-        printf(" Recurso alocado com sucesso!\n");
-     if((cwait(&semaforo)) == -1)
-        printf(" Recurso indisponivel - Thread bloqueada!\n");
-    cyield();
-
+    if(cwait(&semaforo) == 0){
+        if(semaforo.count >= 0){
+            printf(" Recurso alocado com sucesso!\n");
+            printf(" Recursos disponíveis: %d\n",semaforo.count);
+        } else {
+            TCB_t* curthread = GetExecutingThread();
+            printf(" Não há recursos disponíveis! Thread bloqueada.\n");
+            printf(" Recursos: %d\n",semaforo.count);
+            printf(" Thread info:\n-TID: %d\n-State: %d\n",curthread->tid,curthread->state);
+        }
+    } else if((cwait(&semaforo)) == -1)
+        printf(" Recurso indisponivel - Erro ao bloquear a thread!\n");
 }
