@@ -3,7 +3,7 @@
 
 
 #define IDENTIFICATION_SIZE 110
-#define RESOURCE_QUANTITY 1
+#define RESOURCE_QUANTITY 4
 
 csem_t semaforo;
 
@@ -15,6 +15,7 @@ void FreeResource();
 void* TestFunc(void *arg) {
     printf("Thread 1 em execucao\n");
     RequestSemaphore();
+    FreeResource();
     cyield();
     printf("Thread 1 termina sua execucao\n");
 
@@ -24,18 +25,8 @@ void* TestFunc(void *arg) {
 
 void* TestFunc2(void *arg) {
     printf("Thread 2 em execucao\n");
-    RequestSemaphore();
-    cyield();
-    printf("Thread 2 termina sua execucao\n");
-
-    return 0;
-}
-
-void* TestFunc3(void *arg) {
-    printf("Thread 3 em execucao\n");
     FreeResource();
-    RequestSemaphore();
-    printf("Thread 3 termina sua execucao\n");
+    printf("Thread 2 termina sua execucao\n");
 
     return 0;
 }
@@ -43,22 +34,17 @@ void* TestFunc3(void *arg) {
 int main() {
     int Thread1 = -1;
     int Thread2 = -1;
-    int Thread3 = -1;
 
-    printf("\nGrupo de testes de todas as funcoes\n");
-    printf("Espera-se que a thread1 entre em execucao e execute a cwait alocando um recurso.");
-    printf("Em seguida a thread2 entra em execucao e tenta alocar recurso. A thread3 comeca a executar liberando recurso e em seguida alocando!\n");
+    printf("\nGrupo de testes de do semaforo\n");
+    printf("Espera-se que a thread1 entre em execucao e execute a cwait alocando um recurso e logo em seguida libere esse recurso.");
+    printf("Em seguida a thread2 entra em execucao e tenta liberar recurso.\n");
 
     printf("-------Pressione uma tecla para iniciar os testes!-------\n");
 
     if(getchar()){
-    //Imprime a identificacao do grupo
-    GroupIdentification();
-
     //Criacao das threads
     Thread1 = ccreate(TestFunc, (void *) NULL, 0);
     Thread2 = ccreate(TestFunc2, (void *) NULL, 0);
-    Thread3 = ccreate(TestFunc3, (void *) NULL, 0);
 
     //Inicializacao do semaforo
     csem_init(&semaforo, RESOURCE_QUANTITY);
@@ -67,16 +53,14 @@ int main() {
 
     cjoin(Thread1);
     cjoin(Thread2);
-    cjoin(Thread3);
     }
 
     return 0;
-
 }
 
 void GroupIdentification() {
     char identification[IDENTIFICATION_SIZE];
-    printf("\nIdentificacao do grupo:\n");
+    printf("Identificacao do grupo:\n");
     cidentify(identification, IDENTIFICATION_SIZE);
     puts(identification);
 
@@ -101,4 +85,3 @@ void FreeResource() {
 
     printf(" Recurso atual: %d\n", semaforo.count);
 }
-
