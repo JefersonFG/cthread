@@ -74,7 +74,7 @@ int cyield(void){
     if (IsReadyListEmpty() == 0) {
         TCB_t *executing_thread = GetExecutingThread();
 
-        executing_thread->prio += stopTimer();
+        executing_thread->prio += (stopTimer()/100000);
         executing_thread->is_suspended = PROCESS_SUSPENDED;
 
         // Salva o contexto atual da thread
@@ -116,7 +116,7 @@ int cjoin(int tid) {
         TCB_t *current_thread = GetExecutingThread();
         thread_to_wait->joined_thread_id = current_thread->tid;
         current_thread->is_suspended = PROCESS_SUSPENDED;
-        current_thread->prio += stopTimer();
+        current_thread->prio += (stopTimer()/100000);
 
         // Salva o contexto atual da thread
         getcontext(&(current_thread->context));
@@ -176,7 +176,7 @@ int cwait(csem_t *sem) {
     if(sem->count < 0) {
         TCB_t *current_thread = GetExecutingThread();
 
-        current_thread->prio += stopTimer();
+        current_thread->prio += (stopTimer()/100000);
         current_thread->is_suspended = PROCESS_SUSPENDED;
 
         // Salva o contexto atual da thread

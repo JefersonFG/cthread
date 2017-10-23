@@ -68,6 +68,18 @@ void* TestFunc4(void *arg){
 }
 
 /**
+ * Função de testes.
+ */
+void* TestFunc5(void *arg){
+    cwait(&global_semaphore);
+    sleep(0.025);
+    cyield();
+    sleep(0.025);
+    cyield();
+    csignal(&global_semaphore);
+}
+
+/**
  * Verifica que a função ccreate gera diferentes ids para cada thread.
  */
 TEST_F(SchedulerTest, ccreate_different_ids) {
@@ -166,20 +178,22 @@ TEST_F(SchedulerTest, cwait) {
     ASSERT_EQ(new_semaphore.count, -1);
 }
 
-//TODO: descobrir como testar essa porra
+/**
+ * Verifica se o cwait insere a thread na lista de bloqueados, caso o recurso esteja ocupado
+ */
 TEST_F(SchedulerTest, cwait_insertatqueue) {
     csem_init(&global_semaphore,1);
 
     int id1 = ccreate(TestFunc4, (void*)NULL, 0);
-    cjoin(id1);
+    cyield();
     EXPECT_TRUE(FirstFila2(global_semaphore.fila));
 
     int id2 = ccreate(TestFunc4, (void*)NULL, 0);
-    cjoin(id2);
+    cyield();
     EXPECT_FALSE(FirstFila2(global_semaphore.fila));
 
     int id3 = ccreate(TestFunc4, (void*)NULL, 0);
-    cjoin(id3);
+    cyield();
     EXPECT_FALSE(FirstFila2(global_semaphore.fila));
 }
 
@@ -193,6 +207,21 @@ TEST_F(SchedulerTest, csignal) {
     cwait(&new_semaphore);
     csignal(&new_semaphore);
     ASSERT_EQ(new_semaphore.count, 1);
+}
+
+TEST_F(SchedulerTest, csignal_removefromqueue) {
+    csem_init(&global_semaphore,1);
+
+    int t1 = ccreate(TestFunc5, (void*)NULL, 0);
+    cyield();
+
+    int t2 = ccreate(TestFunc5, (void*)NULL, 0);
+    cyield();
+    EXPECT_FALSE(FirstFila2(global_semaphore.fila));
+
+    cyield();
+    cyield();
+    EXPECT_TRUE(FirstFila2(global_semaphore.fila));
 }
 
 int main(int argc, char **argv) {
