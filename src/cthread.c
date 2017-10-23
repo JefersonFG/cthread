@@ -39,6 +39,7 @@ int cidentify (char *name, int size){
  */
 int ccreate (void* (*start)(void*), void *arg, int prio) {
     InitScheduler();
+
     int new_id = GetNewId();
 
     // Cria a representação da nova thread

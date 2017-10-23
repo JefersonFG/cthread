@@ -72,9 +72,7 @@ void* TestFunc4(void *arg){
  */
 void* TestFunc5(void *arg){
     cwait(&global_semaphore);
-    sleep(0.025);
-    cyield();
-    sleep(0.025);
+    sleep(3);
     cyield();
     csignal(&global_semaphore);
 }
@@ -212,6 +210,8 @@ TEST_F(SchedulerTest, csignal) {
 TEST_F(SchedulerTest, csignal_removefromqueue) {
     csem_init(&global_semaphore,1);
 
+    csem_t *sem = &global_semaphore;
+
     int t1 = ccreate(TestFunc5, (void*)NULL, 0);
     cyield();
 
@@ -219,8 +219,7 @@ TEST_F(SchedulerTest, csignal_removefromqueue) {
     cyield();
     EXPECT_FALSE(FirstFila2(global_semaphore.fila));
 
-    cyield();
-    cyield();
+    cjoin(t1);
     EXPECT_TRUE(FirstFila2(global_semaphore.fila));
 }
 
