@@ -17,7 +17,6 @@ void* TestFunc(void *arg) {
     RequestSemaphore();
     cyield();
     printf("Thread 1 termina sua execucao\n");
-    //FreeResource();
 
     return 0;
 
@@ -28,8 +27,6 @@ void* TestFunc2(void *arg) {
     RequestSemaphore();
     cyield();
     printf("Thread 2 termina sua execucao\n");
-    //RequestSemaphore();
-    //FreeResource();
 
     return 0;
 }
@@ -39,7 +36,6 @@ void* TestFunc3(void *arg) {
     FreeResource();
     RequestSemaphore();
     printf("Thread 3 termina sua execucao\n");
-    //RequestSemaphore();
 
     return 0;
 }
