@@ -62,7 +62,7 @@ void* TestFunc3(void *arg) {
 /**
  * Função de testes.
  */
-void* TestFunc4(void *arg){
+void* TestFunc4(void *arg) {
     cwait(&global_semaphore);
     cyield();
 }
@@ -70,11 +70,32 @@ void* TestFunc4(void *arg){
 /**
  * Função de testes.
  */
-void* TestFunc5(void *arg){
+void* TestFunc5(void *arg) {
     cwait(&global_semaphore);
     sleep(3);
     cyield();
     csignal(&global_semaphore);
+}
+
+/**
+ * Função de testes.
+ */
+void* TestFunc6(void *arg) {
+    EXPECT_EQ(0, cjoin( *((int *)arg) ));
+}
+
+/**
+ * Função de testes.
+ */
+void* TestFunc7(void *arg) {
+    EXPECT_LT(cjoin(*((int *)arg)), 0);
+}
+
+/**
+ * Função de testes.
+ */
+void* TestFunc8(void *arg) {
+    cyield();
 }
 
 /**
@@ -141,10 +162,17 @@ TEST_F(SchedulerTest, cjoin_changing_thread) {
     EXPECT_TRUE(IsBlockedListEmpty());
 
     cjoin(id4);
-    cjoin(-1);
+
+    EXPECT_LT(cjoin(-1), 0);
 
     EXPECT_EQ(8, global_var);
     EXPECT_TRUE(IsBlockedListEmpty());
+
+    int id5 = ccreate(TestFunc8, (void *) NULL, 0);
+    int id6 = ccreate(TestFunc6, (void *) &id5, 0);
+    int id7 = ccreate(TestFunc7, (void *) &id5, 0);
+
+    cyield();
 }
 
 /**
@@ -166,8 +194,6 @@ TEST_F(SchedulerTest, csem_init) {
 TEST_F(SchedulerTest, cwait) {
     csem_t new_semaphore;
     csem_init(&new_semaphore, 1);
-
-    // TODO @lmsbatista Olha o que eu escrevi no telegram e corrige esses testes
 
     cwait(&new_semaphore);
     ASSERT_EQ(new_semaphore.count, 0);

@@ -169,7 +169,6 @@ int csem_init(csem_t *sem, int count) {
  * @return Retorna 0 se executou corretamente, retorna um valor negativo caso contrário.
  */
 int cwait(csem_t *sem) {
-    // TODO Testar cwait e ajeitar o que for preciso
     InitScheduler();
 
     sem->count--;
@@ -213,7 +212,6 @@ int cwait(csem_t *sem) {
  * @return Retorna 0 se executou corretamente, retorna um valor negativo caso contrário.
  */
 int csignal(csem_t *sem) {
-    // TODO testar csignal direito e ver se precisa corrigir algo
     InitScheduler();
 
     sem->count++;

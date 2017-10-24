@@ -17,18 +17,6 @@
 #include "support.h"
 #include "cdata.h"
 
-/*--------------------------------------------------------------------
-Função: Insere um nodo na lista indicada, segundo o campo "prio" do TCB_t
-	A fila deve estar ordenada (ou ter sido construída usado apenas essa funcao)
-	O primeiro elemento da lista (first) é aquele com menor valor de "prio"
-Entra:	pfila -> objeto FILA2
-	pnodo -> objeto a ser colocado na FILA2
-Ret:	==0, se conseguiu
-	!=0, caso contrário (erro)
---------------------------------------------------------------------*/
-// TODO Verificar se precisa expôr esta função, se não remover a declaração
-// int	InsertByPrio(PFILA2 pfila, TCB_t *tcb);
-
 /**
  * \brief Retorna um ponteiro para o contexto da função de processo finalizado.
  *
