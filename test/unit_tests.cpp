@@ -16,8 +16,9 @@ extern "C"
 
 #include "gtest/gtest.h"
 
-/// Variável global para testes.
+/// Variáveis globais para testes.
 int global_var = 0;
+csem_t global_semaphore;
 
 /**
  * Classe de testes com funções de inicialização e limpeza para os testes.
@@ -56,6 +57,24 @@ void* TestFunc3(void *arg) {
     cyield();
 
     EXPECT_FALSE(IsBlockedListEmpty());
+}
+
+/**
+ * Função de testes.
+ */
+void* TestFunc4(void *arg){
+    cwait(&global_semaphore);
+    cyield();
+}
+
+/**
+ * Função de testes.
+ */
+void* TestFunc5(void *arg){
+    cwait(&global_semaphore);
+    sleep(3);
+    cyield();
+    csignal(&global_semaphore);
 }
 
 /**
@@ -138,6 +157,70 @@ TEST_F(SchedulerTest, csem_init) {
 
     ASSERT_EQ(2, new_semaphor.count);
     ASSERT_EQ(-NXTFILA_VAZIA, NextFila2(new_semaphor.fila));
+}
+
+
+/**
+ * Verifica se o cwait decrementa o semáforo
+ */
+TEST_F(SchedulerTest, cwait) {
+    csem_t new_semaphore;
+    csem_init(&new_semaphore, 1);
+
+    // TODO @lmsbatista Olha o que eu escrevi no telegram e corrige esses testes
+
+    cwait(&new_semaphore);
+    ASSERT_EQ(new_semaphore.count, 0);
+
+    cwait(&new_semaphore);
+    ASSERT_EQ(new_semaphore.count, -1);
+}
+
+/**
+ * Verifica se o cwait insere a thread na lista de bloqueados, caso o recurso esteja ocupado
+ */
+TEST_F(SchedulerTest, cwait_insertatqueue) {
+    csem_init(&global_semaphore,1);
+
+    int id1 = ccreate(TestFunc4, (void*)NULL, 0);
+    cyield();
+    EXPECT_TRUE(FirstFila2(global_semaphore.fila));
+
+    int id2 = ccreate(TestFunc4, (void*)NULL, 0);
+    cyield();
+    EXPECT_FALSE(FirstFila2(global_semaphore.fila));
+
+    int id3 = ccreate(TestFunc4, (void*)NULL, 0);
+    cyield();
+    EXPECT_FALSE(FirstFila2(global_semaphore.fila));
+}
+
+/**
+ * Verifica se o csginal incrementa o semáforo
+ */
+TEST_F(SchedulerTest, csignal) {
+    csem_t new_semaphore;
+    csem_init(&new_semaphore, 1);
+
+    cwait(&new_semaphore);
+    csignal(&new_semaphore);
+    ASSERT_EQ(new_semaphore.count, 1);
+}
+
+TEST_F(SchedulerTest, csignal_removefromqueue) {
+    csem_init(&global_semaphore,1);
+
+    csem_t *sem = &global_semaphore;
+
+    int t1 = ccreate(TestFunc5, (void*)NULL, 0);
+    cyield();
+
+    int t2 = ccreate(TestFunc5, (void*)NULL, 0);
+    cyield();
+    EXPECT_FALSE(FirstFila2(global_semaphore.fila));
+
+    cjoin(t1);
+    EXPECT_TRUE(FirstFila2(global_semaphore.fila));
 }
 
 int main(int argc, char **argv) {

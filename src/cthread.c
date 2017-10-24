@@ -75,7 +75,7 @@ int cyield(void){
     if (IsReadyListEmpty() == 0) {
         TCB_t *executing_thread = GetExecutingThread();
 
-        executing_thread->prio += stopTimer();
+        executing_thread->prio += (stopTimer()/100000);
         executing_thread->is_suspended = PROCESS_SUSPENDED;
 
         // Salva o contexto atual da thread
@@ -117,7 +117,7 @@ int cjoin(int tid) {
         TCB_t *current_thread = GetExecutingThread();
         thread_to_wait->joined_thread_id = current_thread->tid;
         current_thread->is_suspended = PROCESS_SUSPENDED;
-        current_thread->prio += stopTimer();
+        current_thread->prio += (stopTimer()/100000);
 
         // Salva o contexto atual da thread
         getcontext(&(current_thread->context));
@@ -169,7 +169,35 @@ int csem_init(csem_t *sem, int count) {
  * @return Retorna 0 se executou corretamente, retorna um valor negativo caso contrário.
  */
 int cwait(csem_t *sem) {
-    // TODO Implementar cwait
+    // TODO Testar cwait e ajeitar o que for preciso
+    InitScheduler();
+
+    sem->count--;
+
+    if(sem->count < 0) {
+        TCB_t *current_thread = GetExecutingThread();
+
+        current_thread->prio += (stopTimer()/100000);
+        current_thread->is_suspended = PROCESS_SUSPENDED;
+
+        // Salva o contexto atual da thread
+        getcontext(&(current_thread->context));
+
+        // Verifica se a thread está suspensa
+        // Quando a thread tiver seu contexto restaurado is_suspended será falso
+        if (current_thread->is_suspended == PROCESS_SUSPENDED) {
+            AppendFila2(sem->fila, current_thread);
+
+            if(BlockCurrentThread() < 0) {
+                LastFila2(sem->fila);
+                DeleteAtIteratorFila2(sem->fila);
+                return -1;
+            }
+
+            Dispatcher();
+        }
+    }
+
     return 0;
 }
 
@@ -185,7 +213,20 @@ int cwait(csem_t *sem) {
  * @return Retorna 0 se executou corretamente, retorna um valor negativo caso contrário.
  */
 int csignal(csem_t *sem) {
-    // TODO Implementar csignal
+    // TODO testar csignal direito e ver se precisa corrigir algo
+    InitScheduler();
+
+    sem->count++;
+
+    if(FirstFila2(sem->fila) == 0) {
+        TCB_t *semaphorethread = (TCB_t*)GetAtIteratorFila2(sem->fila);
+
+        if(UnblockThread(semaphorethread->tid) < 0)
+            return -1;
+        else
+            DeleteAtIteratorFila2(sem->fila);
+    }
+
     return 0;
 }
 

@@ -80,6 +80,8 @@ int main(int argc, char *argv[ ]) {
 
     cjoin(prod);
     cjoin(cons);
+
+    return 0;
 }
 
 
