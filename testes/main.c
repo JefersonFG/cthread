@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include "../include/cthread.h"
 
-
 #define IDENTIFICATION_SIZE 110
 #define RESOURCE_QUANTITY 1
 
@@ -10,7 +9,6 @@ csem_t semaforo;
 void GroupIdentification();
 void RequestSemaphore();
 void FreeResource();
-
 
 void* TestFunc(void *arg) {
     printf("Thread 1 em execucao\n");
@@ -51,23 +49,23 @@ int main() {
 
     printf("-------Pressione uma tecla para iniciar os testes!-------\n");
 
-    if(getchar()){
-    //Imprime a identificacao do grupo
-    GroupIdentification();
+    if (getchar()) {
+        //Imprime a identificacao do grupo
+        GroupIdentification();
 
-    //Criacao das threads
-    Thread1 = ccreate(TestFunc, (void *) NULL, 0);
-    Thread2 = ccreate(TestFunc2, (void *) NULL, 0);
-    Thread3 = ccreate(TestFunc3, (void *) NULL, 0);
+        //Criacao das threads
+        Thread1 = ccreate(TestFunc, (void *) NULL, 0);
+        Thread2 = ccreate(TestFunc2, (void *) NULL, 0);
+        Thread3 = ccreate(TestFunc3, (void *) NULL, 0);
 
-    //Inicializacao do semaforo
-    csem_init(&semaforo, RESOURCE_QUANTITY);
+        //Inicializacao do semaforo
+        csem_init(&semaforo, RESOURCE_QUANTITY);
 
-    printf("Recurso inicial do Semaforo: %d\n", semaforo.count);
+        printf("Recurso inicial do Semaforo: %d\n", semaforo.count);
 
-    cjoin(Thread1);
-    cjoin(Thread2);
-    cjoin(Thread3);
+        cjoin(Thread1);
+        cjoin(Thread2);
+        cjoin(Thread3);
     }
 
     return 0;
@@ -76,6 +74,7 @@ int main() {
 
 void GroupIdentification() {
     char identification[IDENTIFICATION_SIZE];
+
     printf("\nIdentificacao do grupo:\n");
     cidentify(identification, IDENTIFICATION_SIZE);
     puts(identification);
@@ -83,22 +82,21 @@ void GroupIdentification() {
 }
 
 void RequestSemaphore() {
-    if(cwait(&semaforo) == 0)
+    if (cwait(&semaforo) == 0)
         printf(" cwait executada com sucesso!\n");
-     else
+    else
         printf(" cwait executada com erro!\n");
 
     printf(" Recurso atual: %d\n", semaforo.count);
 }
 
 void FreeResource() {
-    if(csignal(&semaforo) == 0)
+    if (csignal(&semaforo) == 0)
         printf(" csignal executada com sucesso, recurso liberado!\n");
-        else if(csignal(&semaforo) == -1)
+    else if (csignal(&semaforo) == -1)
         printf(" csignal executada com erro! Nao foi possivel bloquear a thread\n");
-           else if(csignal(&semaforo) == -2)
-            printf(" csignal executada com erro na estrutura de fila!\n");
+    else if (csignal(&semaforo) == -2)
+        printf(" csignal executada com erro na estrutura de fila!\n");
 
     printf(" Recurso atual: %d\n", semaforo.count);
 }
-
