@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="9" failures="0" disabled="0" errors="0" timestamp="2017-10-23T23:54:16" time="6.001" name="AllTests">
+  <testsuite name="SchedulerTest" tests="9" failures="0" disabled="0" errors="0" time="6.001">
+    <testcase name="ccreate_different_ids" status="run" time="0" classname="SchedulerTest" />
+    <testcase name="ccreate_list_not_empty" status="run" time="0" classname="SchedulerTest" />
+    <testcase name="cyield_changing_thread" status="run" time="0" classname="SchedulerTest" />
+    <testcase name="cjoin_changing_thread" status="run" time="0" classname="SchedulerTest" />
+    <testcase name="csem_init" status="run" time="0" classname="SchedulerTest" />
+    <testcase name="cwait" status="run" time="0" classname="SchedulerTest" />
+    <testcase name="cwait_insertatqueue" status="run" time="0" classname="SchedulerTest" />
+    <testcase name="csignal" status="run" time="0" classname="SchedulerTest" />
+    <testcase name="csignal_removefromqueue" status="run" time="6.001" classname="SchedulerTest" />
+  </testsuite>
+</testsuites>
