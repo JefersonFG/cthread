@@ -14,7 +14,7 @@ set(SOURCE_FILES
         ../include/cthread.h
         ../include/cdata.h
         ../include/support.h
-        ../bin/support.o manguaca.c)
+        ../bin/support.o)
 
 add_executable(testes ${SOURCE_FILES})
 
